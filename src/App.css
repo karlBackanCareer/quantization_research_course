@@ -1,4 +1,4 @@
-/* Reset and base styles */
+/* Base styles */
 * {
   margin: 0;
   padding: 0;
@@ -7,61 +7,104 @@
 
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
-/* Core layout */
+/* Layout */
 .app-container {
   min-height: 100vh;
-  background: linear-gradient(to bottom right, #0f172a, #1e293b);
-  position: relative;
-  overflow-x: hidden;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
 }
 
 .main-card {
   max-width: 1400px;
-  margin: 0 auto;
+  width: 100%;
   min-height: calc(100vh - 150px);
   background: rgba(255, 255, 255, 0.05);
   backdrop-filter: blur(10px);
-  border-radius: 1rem;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  padding: 1rem;
+  border-radius: 1.5rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  padding: 2rem;
   padding-bottom: 150px;
 }
 
-/* Header styles */
+/* Start button styles */
+.start-button {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  font-size: 1.5rem;
+  font-weight: 600;
+  padding: 1.25rem 3rem;
+  border: none;
+  border-radius: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
+.start-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4);
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+}
+
+.start-button:active {
+  transform: translateY(1px);
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+}
+
+/* Header */
 .header {
   text-align: center;
-  padding: 1rem 0 2rem 0;
+  padding: 1rem 0 2.5rem;
   color: white;
 }
 
 .title {
-  font-size: 2rem;
+  font-size: 2.25rem;
   font-weight: 700;
-  margin-bottom: 1rem;
+  margin-bottom: 1.25rem;
+  background: linear-gradient(to right, #60a5fa, #93c5fd);
+  -webkit-background-clip: text;
+  color: transparent;
 }
 
 .progress {
-  display: inline-block;
-  padding: 0.5rem 1.5rem;
-  background: rgba(59, 130, 246, 0.2);
+  display: inline-flex;
+  align-items: center;
+  padding: 0.75rem 2rem;
+  background: rgba(59, 130, 246, 0.15);
   border-radius: 9999px;
-  color: white;
-  margin-top: 0.5rem;
+  color: #e2e8f0;
+  font-weight: 500;
+  gap: 1rem;
+}
+
+/* Timer styles */
+.timer {
+  transition: color 0.3s ease;
+  font-weight: 600;
+  min-width: 4rem;
+}
+
+.timer-warning {
+  color: #ef4444;
 }
 
 /* Image section */
 .image-section {
   display: flex;
   justify-content: center;
-  gap: 2rem;
+  gap: 3rem;
   margin: 0 auto;
   max-width: 100%;
-  height: calc(100vh - 350px);
+  height: calc(100vh - 400px);
   overflow: hidden;
-  padding: 0 1rem;
+  padding: 0 2rem;
 }
 
 .image-wrapper {
@@ -69,87 +112,97 @@ body {
   flex-direction: column;
   align-items: center;
   max-height: 100%;
+  flex: 1;
 }
 
 .test-image {
-  max-height: calc(100% - 2rem);
+  max-height: calc(100% - 3rem);
   width: auto;
   max-width: 100%;
   object-fit: contain;
-  border-radius: 0.5rem;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  border-radius: 0.75rem;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  transition: transform 0.3s ease;
+}
+
+.test-image:hover {
+  transform: scale(1.02);
 }
 
 .image-label {
-  margin-top: 1rem;
-  font-size: 1.125rem;
+  margin-top: 1.5rem;
+  font-size: 1.25rem;
   color: #e2e8f0;
-  font-weight: 500;
+  font-weight: 600;
 }
 
-/* Fixed control panel */
+/* Control panel */
 .control-panel {
   position: fixed;
   bottom: 0;
   left: 0;
   width: 100%;
-  background: rgb(15, 23, 42);
-  padding: 1.5rem;
+  background: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(8px);
+  padding: 1.75rem;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
-  height: 130px;
+  height: 140px;
   display: flex;
-  flex-direction: column;
-  justify-content: center;
+  align-items: center;
   z-index: 1000;
 }
 
 .control-panel-inner {
-  max-width: 42rem;
+  max-width: 48rem;
+  width: 100%;
   margin: 0 auto;
 }
 
 .question {
   text-align: center;
-  font-size: 1.25rem;
+  font-size: 1.4rem;
   font-weight: 600;
   color: white;
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
 }
 
-/* Button styles */
+/* Buttons */
 .button-container,
 .rating-container {
   display: flex;
   justify-content: center;
-  gap: 1rem;
-  margin-top: 0.5rem;
+  gap: 1.25rem;
 }
 
 .choice-button,
 .rating-button {
-  background: #2563eb;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   color: white;
-  font-weight: 500;
+  font-weight: 600;
   border: none;
-  border-radius: 0.5rem;
+  border-radius: 0.75rem;
   cursor: pointer;
   transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
 }
 
 .choice-button {
-  width: 120px;
-  height: 40px;
+  width: 140px;
+  height: 48px;
+  font-size: 1.1rem;
 }
 
 .rating-button {
-  width: 50px;
-  height: 40px;
+  width: 56px;
+  height: 48px;
+  font-size: 1.2rem;
 }
 
 .choice-button:hover,
 .rating-button:hover {
-  background: #1d4ed8;
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
 }
 
 .choice-button:active,
@@ -160,39 +213,60 @@ body {
 .rating-labels {
   display: flex;
   justify-content: space-between;
-  width: 300px;
-  margin: 0.5rem auto 0;
+  width: 340px;
+  margin: 0.75rem auto 0;
   color: #94a3b8;
-  font-size: 0.875rem;
+  font-size: 1rem;
+  font-weight: 500;
 }
 
-/* Responsive design */
+/* Responsive */
 @media (max-width: 768px) {
   .image-section {
     flex-direction: column;
-    height: calc(100vh - 400px);
+    height: auto;
+    gap: 2rem;
   }
 
   .control-panel {
-    height: 150px;
+    height: 160px;
   }
 
   .test-image {
-    max-height: 40vh;
+    max-height: 35vh;
+  }
+
+  .title {
+    font-size: 1.75rem;
   }
 }
 
 @media (max-width: 480px) {
+  .app-container {
+    padding: 1rem;
+  }
+
+  .main-card {
+    padding: 1rem;
+  }
+
   .choice-button {
-    width: 100px;
+    width: 110px;
+    height: 44px;
+    font-size: 1rem;
   }
 
   .rating-button {
-    width: 45px;
-    height: 35px;
+    width: 48px;
+    height: 44px;
   }
 
-  .title {
-    font-size: 1.5rem;
+  .question {
+    font-size: 1.2rem;
+  }
+
+  .rating-labels {
+    width: 280px;
+    font-size: 0.875rem;
   }
 }

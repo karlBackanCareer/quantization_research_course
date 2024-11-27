@@ -42,6 +42,8 @@ const App = () => {
 
   const [tests, setTests] = useState([]);
   const [currentTest, setCurrentTest] = useState(0);
+  const [testStarted, setTestStarted] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(10);
   const [testData, setTestData] = useState({
     id: Date.now().toString(),
     startTime: new Date().toISOString(),
@@ -57,6 +59,16 @@ const App = () => {
     })))].sort(() => Math.random() - 0.5);
     setTests(generatedTests);
   }, []);
+
+  useEffect(() => {
+    let timer;
+    if (testStarted && timeLeft > 0) {
+      timer = setInterval(() => {
+        setTimeLeft(prev => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [testStarted, timeLeft]);
 
   const handleComparison = async (selectedWorse) => {
     const startTime = Date.now();
@@ -85,6 +97,7 @@ const App = () => {
         response_time: Date.now() - startTime
       }]
     }));
+    setTimeLeft(10);
     nextTest();
   };
 
@@ -113,6 +126,7 @@ const App = () => {
         response_time: Date.now() - startTime
       }]
     }));
+    setTimeLeft(10);
     nextTest();
   };
 
@@ -122,6 +136,15 @@ const App = () => {
     } else {
       setCurrentTest(prev => prev + 1);
     }
+  };
+
+  const startTest = () => {
+    setTestStarted(true);
+    setTimeLeft(10);
+    setTestData({
+      ...testData,
+      startTime: new Date().toISOString()
+    });
   };
 
   const finishTest = () => {
@@ -152,7 +175,34 @@ const App = () => {
     URL.revokeObjectURL(url);
   };
 
-  if (!tests.length || currentTest >= tests.length) {
+  if (!tests.length) {
+    return <div className="app-container">Loading...</div>;
+  }
+
+  if (!testStarted) {
+    return (
+      <div className="app-container">
+        <button
+          className="start-button"
+          onClick={startTest}
+          style={{
+            padding: '1rem 2rem',
+            fontSize: '1.2rem',
+            fontWeight: 'bold',
+            backgroundColor: '#007bff',
+            color: 'white',
+            border: 'none',
+            borderRadius: '5px',
+            cursor: 'pointer'
+          }}
+        >
+          Start Test
+        </button>
+      </div>
+    );
+  }
+
+  if (currentTest >= tests.length) {
     return <div className="app-container">Test Complete</div>;
   }
 
@@ -171,7 +221,15 @@ const App = () => {
           <h2 className="title">
             {currentTestData.type === 'comparison' ? 'Quality Comparison' : 'Quality Rating'}
           </h2>
-          <div className="progress">Test {currentTest + 1} of {tests.length}</div>
+          <div className="progress">
+            Test {currentTest + 1} of {tests.length}
+            <div style={{
+              marginLeft: '1rem',
+              color: timeLeft === 0 ? 'red' : 'inherit'
+            }}>
+              Time: {timeLeft}s
+            </div>
+          </div>
         </div>
 
         {currentTestData.type === 'comparison' ? (
