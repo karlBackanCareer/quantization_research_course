@@ -1,38 +1,198 @@
-.App {
-  text-align: center;
+/* Reset and base styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-
-.App-header {
-  background-color: #282c34;
+/* Core layout */
+.app-container {
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
+  background: linear-gradient(to bottom right, #0f172a, #1e293b);
+  position: relative;
+  overflow-x: hidden;
+}
+
+.main-card {
+  max-width: 1400px;
+  margin: 0 auto;
+  min-height: calc(100vh - 150px);
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border-radius: 1rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  padding: 1rem;
+  padding-bottom: 150px;
+}
+
+/* Header styles */
+.header {
+  text-align: center;
+  padding: 1rem 0 2rem 0;
   color: white;
 }
 
-.App-link {
-  color: #61dafb;
+.title {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
+.progress {
+  display: inline-block;
+  padding: 0.5rem 1.5rem;
+  background: rgba(59, 130, 246, 0.2);
+  border-radius: 9999px;
+  color: white;
+  margin-top: 0.5rem;
+}
+
+/* Image section */
+.image-section {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  margin: 0 auto;
+  max-width: 100%;
+  height: calc(100vh - 350px);
+  overflow: hidden;
+  padding: 0 1rem;
+}
+
+.image-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-height: 100%;
+}
+
+.test-image {
+  max-height: calc(100% - 2rem);
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.image-label {
+  margin-top: 1rem;
+  font-size: 1.125rem;
+  color: #e2e8f0;
+  font-weight: 500;
+}
+
+/* Fixed control panel */
+.control-panel {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: rgb(15, 23, 42);
+  padding: 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  height: 130px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.control-panel-inner {
+  max-width: 42rem;
+  margin: 0 auto;
+}
+
+.question {
+  text-align: center;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: white;
+  margin-bottom: 1rem;
+}
+
+/* Button styles */
+.button-container,
+.rating-container {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.choice-button,
+.rating-button {
+  background: #2563eb;
+  color: white;
+  font-weight: 500;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.choice-button {
+  width: 120px;
+  height: 40px;
+}
+
+.rating-button {
+  width: 50px;
+  height: 40px;
+}
+
+.choice-button:hover,
+.rating-button:hover {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+}
+
+.choice-button:active,
+.rating-button:active {
+  transform: translateY(1px);
+}
+
+.rating-labels {
+  display: flex;
+  justify-content: space-between;
+  width: 300px;
+  margin: 0.5rem auto 0;
+  color: #94a3b8;
+  font-size: 0.875rem;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .image-section {
+    flex-direction: column;
+    height: calc(100vh - 400px);
   }
-  to {
-    transform: rotate(360deg);
+
+  .control-panel {
+    height: 150px;
+  }
+
+  .test-image {
+    max-height: 40vh;
+  }
+}
+
+@media (max-width: 480px) {
+  .choice-button {
+    width: 100px;
+  }
+
+  .rating-button {
+    width: 45px;
+    height: 35px;
+  }
+
+  .title {
+    font-size: 1.5rem;
   }
 }
