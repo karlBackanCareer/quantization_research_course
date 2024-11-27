@@ -1,4 +1,4 @@
-# Research Course at Mid Sweden University. 
+# Research Course at Mid Sweden University
 
 User tests reveal subjective assessment of image quality when downscaling and upscaling using different scaling factors and tests.
 
