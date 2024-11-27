@@ -10,6 +10,8 @@ Using 4 different scaling factors: 0.85, 0.60, 0.45, 0.30.
 
 Two tests were implemented. One where you have the original next to the downscaled/upscaled image. The other one where you have to rate from 1 to 5 for the percieved quality of that image, mixing downscaled/upscaled and the original.
 
+![screenshot](public/example_interface.png)
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
