@@ -2,12 +2,11 @@ import cv2
 import numpy as np
 from skimage.metrics import peak_signal_noise_ratio as psnr
 from skimage.metrics import structural_similarity as ssim
-import os
-import json
 from pathlib import Path
-from tqdm import tqdm
 import pandas as pd
 import matplotlib.pyplot as plt
+from scipy import stats
+
 
 class ImageProcessor:
     def __init__(self, input_dir, output_dir):
@@ -15,78 +14,132 @@ class ImageProcessor:
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
+        # From transcript: "three steps or four steps", "four or five different scales"
+        self.scale_factors = [0.85, 0.66, 0.5, 0.33]
+
+        # From transcript: "landing source four and bicubic"
+        self.upscale_methods = [cv2.INTER_CUBIC, cv2.INTER_LANCZOS4]
+
+        # From transcript: "two images on smooth areas, snow sky", "two images with kind of a lot going on"
+        self.categories = {
+            'smooth': ['snow', 'sky'],
+            'busy': ['forest', 'baboon', 'leaves'],
+            'mixed': ['bridge', 'building']
+        }
+
     def process_dataset(self):
-        image_files = list(self.input_dir.glob('*.png')) + list(self.input_dir.glob('*.jpg'))
-        if not image_files:
-            raise Exception(f"No images found in {self.input_dir}")
+        results = []
+        image_files = list(self.input_dir.glob('*.jpg')) + list(self.input_dir.glob('*.png'))
 
-        all_results = []
-        # Finer scale gradations around critical points
-        scale_factors = [0.85, 0.60, 0.45, 0.30]
+        for img_path in image_files:
 
-        for img_path in tqdm(image_files):
             img = cv2.imread(str(img_path))
             if img is None:
                 continue
 
+            # From transcript: "keep them at same square aspect ratio"
             h, w = img.shape[:2]
-            base_name = img_path.stem
-            original_path = str(self.output_dir / f"{base_name}_original.jpg")
-            cv2.imwrite(original_path, img)
+            min_dim = min(h, w)
+            img = img[:min_dim, :min_dim]
 
-            for scale in scale_factors:
-                down_size = (int(w * scale), int(h * scale))
-                # Use INTER_AREA for downscaling to minimize moiré patterns
-                downscaled = cv2.resize(img, down_size, interpolation=cv2.INTER_AREA)
-                # Use INTER_LANCZOS4 for upscaling to maintain quality
-                upscaled = cv2.resize(downscaled, (w, h), interpolation=cv2.INTER_LANCZOS4)
+            original_path = self.output_dir / f"{img_path.stem}_original.jpg"
+            cv2.imwrite(str(original_path), img)
 
-                processed_path = str(self.output_dir / f"{base_name}_processed_{scale}.jpg")
-                cv2.imwrite(processed_path, upscaled)
+            for scale in self.scale_factors:
+                down_size = (int(min_dim * scale), int(min_dim * scale))
+                downscaled = cv2.resize(img, down_size, cv2.INTER_AREA)
 
-                all_results.append({
-                    "original_path": original_path,
-                    "processed_path": processed_path,
-                    "scale": scale,
-                    "psnr": float(psnr(img, upscaled)),
-                    "ssim": float(ssim(img, upscaled, channel_axis=2))
-                })
+                for method in self.upscale_methods:
+                    upscaled = cv2.resize(downscaled, (min_dim, min_dim), method)
+                    method_name = "cubic" if method == cv2.INTER_CUBIC else "lanczos"
 
-        df = pd.DataFrame(all_results)
+                    output_path = self.output_dir / f"{img_path.stem}_{scale}_{method_name}.jpg"
+                    cv2.imwrite(str(output_path), upscaled)
+
+                    # Categorize images based on name
+                    img_type = 'other'
+                    stem = img_path.stem.lower()
+                    for cat, patterns in self.categories.items():
+                        if any(p in stem for p in patterns):
+                            img_type = cat
+                            break
+
+                    results.append({
+                        "image": img_path.stem,
+                        "category": img_type,
+                        "scale": scale,
+                        "method": method_name,
+                        "psnr": float(psnr(img, upscaled)),
+                        "ssim": float(ssim(img, upscaled, channel_axis=2))
+                    })
+
+        df = pd.DataFrame(results)
         df.to_csv(self.output_dir / 'metrics.csv', index=False)
-        with open(self.output_dir / 'image_pairs.json', 'w') as f:
-            json.dump(all_results, f)
         return df
 
     def plot_metrics(self, df):
-        plt.figure(figsize=(12, 5))
+        plt.figure(figsize=(15, 5))
 
-        plt.subplot(1, 2, 1)
-        for orig_path in df['original_path'].unique():
-            data = df[df['original_path'] == orig_path]
-            plt.plot(data['scale'], data['psnr'], '-o', label=Path(orig_path).stem)
+        # From transcript: Quality plots with confidence intervals
+        plt.subplot(1, 3, 1)
+        for method in df['method'].unique():
+            data = df[df['method'] == method]
+            mean = data.groupby('scale')['psnr'].mean()
+            std = data.groupby('scale')['psnr'].std()
+            plt.plot(mean.index, mean.values, '-o', label=method)
+            plt.fill_between(mean.index, mean - std, mean + std, alpha=0.2)
+        plt.xlabel('Scale Factor')
+        plt.ylabel('PSNR (dB)')
+        plt.title('Quality vs Scale')
+        plt.legend()
+        plt.grid(True)
+
+        # From transcript: "2D chart showing clustering"
+        plt.subplot(1, 3, 2)
+        for category in df['category'].unique():
+            data = df[df['category'] == category]
+            plt.scatter(data['scale'], data['psnr'], label=category, alpha=0.6)
         plt.xlabel('Scale Factor')
         plt.ylabel('PSNR')
-        plt.title('PSNR vs Scale Factor')
+        plt.title('Content Clustering')
         plt.legend()
+        plt.grid(True)
 
-        plt.subplot(1, 2, 2)
-        for orig_path in df['original_path'].unique():
-            data = df[df['original_path'] == orig_path]
-            plt.plot(data['scale'], data['ssim'], '-o', label=Path(orig_path).stem)
-        plt.xlabel('Scale Factor')
+        plt.subplot(1, 3, 3)
+        for category in df['category'].unique():
+            data = df[df['category'] == category]
+            plt.scatter(data['psnr'], data['ssim'], label=category)
+        plt.xlabel('PSNR')
         plt.ylabel('SSIM')
-        plt.title('SSIM vs Scale Factor')
+        plt.title('Quality Metrics Clustering')
         plt.legend()
+        plt.grid(True)
 
         plt.tight_layout()
-        plt.savefig(self.output_dir / 'metrics_plot.png')
+        plt.savefig(self.output_dir / 'analysis.png', dpi=300)
         plt.close()
 
+    def analyze_significance(self, df):
+        # From transcript: "student t-test with 95 confidence interval"
+        print("\nStatistical Analysis (95% confidence):")
+
+        for category in df['category'].unique():
+            print(f"\nCategory: {category}")
+            cat_data = df[df['category'] == category]
+
+            # Compare methods
+            for method in df['method'].unique():
+                method_data = cat_data[cat_data['method'] == method]
+                t_stat, p_val = stats.ttest_1samp(method_data['psnr'], 0)
+                print(f"{method} PSNR p-value: {p_val:.4f}")
+
+
 def main():
-    processor = ImageProcessor("set14", "public/processed_images")
-    results_df = processor.process_dataset()
-    processor.plot_metrics(results_df)
+    processor = ImageProcessor("set14", "processed_images")
+    results = processor.process_dataset()
+    processor.plot_metrics(results)
+    processor.analyze_significance(results)
+
 
 if __name__ == "__main__":
     main()
