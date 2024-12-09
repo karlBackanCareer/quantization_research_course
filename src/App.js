@@ -10,6 +10,7 @@ const App = () => {
   const [currentTest, setCurrentTest] = useState(0);
   const [testStarted, setTestStarted] = useState(false);
   const [timeLeft, setTimeLeft] = useState(10);
+  const [questionStartTime, setQuestionStartTime] = useState(null);
   const [testData, setTestData] = useState({
     id: Date.now().toString(),
     startTime: new Date().toISOString(),
@@ -17,7 +18,6 @@ const App = () => {
   });
 
   useEffect(() => {
-    // Generate test cases including originals
     const processedTests = baseImages.flatMap(img =>
       scales.flatMap(scale => methods.map(method => ({
         image: img,
@@ -27,7 +27,6 @@ const App = () => {
       })))
     );
 
-    // Add original image tests
     const originalTests = baseImages.map(img => ({
       image: img,
       isOriginal: true
@@ -36,7 +35,7 @@ const App = () => {
     const singleRoundTests = [...processedTests, ...originalTests];
     const allTests = [...singleRoundTests, ...singleRoundTests].sort(() => Math.random() - 0.5);
     setTests(allTests);
-  }, []);
+  }, [scales, methods, baseImages]);
 
   useEffect(() => {
     let timer;
@@ -46,22 +45,39 @@ const App = () => {
     return () => clearInterval(timer);
   }, [testStarted, timeLeft]);
 
+  useEffect(() => {
+    if (testStarted) {
+      setQuestionStartTime(Date.now());
+    }
+  }, [currentTest, testStarted]);
+
   const handleRating = rating => {
+    const endTime = Date.now();
+    const responseTime = (endTime - questionStartTime) / 1000;
+
     setTestData(prev => ({
       ...prev,
       results: [...prev.results, {
         ...tests[currentTest],
         rating,
-        timestamp: Date.now()
+        responseTimeSeconds: responseTime,
+        startTime: questionStartTime,
+        endTime: endTime
       }]
     }));
+
     setTimeLeft(10);
-    currentTest >= tests.length - 1 ? finishTest() : setCurrentTest(prev => prev + 1);
+    if (currentTest >= tests.length - 1) {
+      finishTest();
+    } else {
+      setCurrentTest(prev => prev + 1);
+    }
   };
 
   const startTest = () => {
     setTestStarted(true);
     setTimeLeft(10);
+    setQuestionStartTime(Date.now());
   };
 
   const finishTest = () => {
@@ -70,6 +86,7 @@ const App = () => {
       endTime: new Date().toISOString(),
       summary: {
         totalTests: tests.length,
+        averageResponseTime: testData.results.reduce((sum, r) => sum + r.responseTimeSeconds, 0) / testData.results.length,
         averageByScale: scales.reduce((acc, scale) => ({
           ...acc,
           [scale]: testData.results
@@ -83,6 +100,7 @@ const App = () => {
           testData.results.filter(r => r.isOriginal).length || 0
       }
     };
+
     const blob = new Blob([JSON.stringify(results, null, 2)]);
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -133,8 +151,6 @@ const App = () => {
   if (currentTest >= tests.length) return <div className="app-container">Test Complete</div>;
 
   const currentTestData = tests[currentTest];
-
-  // Construct image path based on whether it's original or processed
   const imagePath = currentTestData.isOriginal
     ? `processed_images/${currentTestData.image}_original.jpg`
     : `processed_images/${currentTestData.image}_${currentTestData.scale}_${currentTestData.method}.jpg`;
