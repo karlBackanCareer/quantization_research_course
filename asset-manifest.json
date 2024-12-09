@@ -1,15 +1,15 @@
 {
   "files": {
     "main.css": "/quantization_research_course/static/css/main.d3e3cf7d.css",
-    "main.js": "/quantization_research_course/static/js/main.0fd7ca3d.js",
+    "main.js": "/quantization_research_course/static/js/main.edf206f1.js",
     "static/js/453.9228acfc.chunk.js": "/quantization_research_course/static/js/453.9228acfc.chunk.js",
     "index.html": "/quantization_research_course/index.html",
     "main.d3e3cf7d.css.map": "/quantization_research_course/static/css/main.d3e3cf7d.css.map",
-    "main.0fd7ca3d.js.map": "/quantization_research_course/static/js/main.0fd7ca3d.js.map",
+    "main.edf206f1.js.map": "/quantization_research_course/static/js/main.edf206f1.js.map",
     "453.9228acfc.chunk.js.map": "/quantization_research_course/static/js/453.9228acfc.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.d3e3cf7d.css",
-    "static/js/main.0fd7ca3d.js"
+    "static/js/main.edf206f1.js"
   ]
 }
