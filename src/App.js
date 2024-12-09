@@ -118,7 +118,7 @@ const App = () => {
         <div className="welcome-screen">
           <div className="title-section">
             <h1 className="main-title">Image Quality Assessment</h1>
-            <p className="subtitle">Rate the quality of processed images in our study</p>
+            <p className="subtitle">Rate the quality of processed images in my study</p>
             <div className="stats">
               <div className="stat-item">
                 <span className="stat-value">{tests.length}</span>
