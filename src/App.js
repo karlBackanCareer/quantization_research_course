@@ -35,7 +35,7 @@ const App = () => {
     const singleRoundTests = [...processedTests, ...originalTests];
     const allTests = [...singleRoundTests, ...singleRoundTests].sort(() => Math.random() - 0.5);
     setTests(allTests);
-  }, [scales, methods, baseImages]);
+  }, []);
 
   useEffect(() => {
     let timer;
