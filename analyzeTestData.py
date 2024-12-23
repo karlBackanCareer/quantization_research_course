@@ -19,129 +19,205 @@ class ImageQualityAnalyzer:
         self.rating_details = []
         self.analysis_results = {}
 
-        # Custom color palette for improved visualization
+        # Enhanced contrast color palette
         self.colors = {
-            'original': '#2ecc71',
-            'scale_0.85': '#3498db',
-            'scale_0.66': '#e74c3c',
-            'scale_0.50': '#f1c40f',
-            'scale_0.33': '#9b59b6',
-            'method1': '#2980b9',
-            'method2': '#c0392b'
+            'original': '#1a73e8',  # Bright blue
+            'scale_0.85': '#34a853',  # Vivid green
+            'scale_0.66': '#ea4335',  # Bright red
+            'scale_0.50': '#fbbc04',  # Bright yellow
+            'scale_0.33': '#673ab7',  # Deep purple
+            'method1': '#2196f3',  # Light blue
+            'method2': '#f44336'  # Light red
         }
+
+        # Enhanced default plot styling
+        plt.rcParams.update({
+            'figure.facecolor': 'white',
+            'axes.facecolor': 'white',
+            'font.size': 14,  # Increased base font size
+            'axes.labelsize': 16,  # Larger axis labels
+            'axes.titlesize': 18,  # Larger titles
+            'xtick.labelsize': 14,  # Larger tick labels
+            'ytick.labelsize': 14,
+            'legend.fontsize': 14,
+            'axes.grid': True,
+            'grid.alpha': 0.3,
+            'figure.dpi': 300,
+            'savefig.dpi': 300,
+            'font.weight': 'bold',
+            'axes.labelweight': 'bold',
+            'figure.autolayout': True
+        })
 
     def create_visualizations(self, output_dir='analysis_output'):
         os.makedirs(output_dir, exist_ok=True)
 
-        # 1. Simplified Rating Trends Over Time
-        plt.figure(figsize=(14, 8))
+        # 1. Enhanced Rating Trends
+        plt.figure(figsize=(16, 10))
         plot_df = self.rating_df.copy()
         plot_df.loc[plot_df['is_original'], 'scale'] = 1.0
-        window = 15  # Increased window for smoother trends
+        window = 20
 
-        # Plot with reduced points to minimize clutter
-        step = 3
         for scale in sorted(plot_df['scale'].unique()):
             data = plot_df[plot_df['scale'] == scale]
             ratings = data['rating'].rolling(window=window, min_periods=1).mean()
-            x_vals = data.index[::step]
-            y_vals = ratings.values[::step]
             scale_label = 'Original' if scale == 1.0 else f'Scale {scale:.2f}'
             color = self.colors['original'] if scale == 1.0 else self.colors[f'scale_{scale:.2f}']
-            plt.plot(x_vals, y_vals, label=scale_label, color=color, alpha=0.8)
 
-        plt.title('Rating Trends Over Time (Smoothed)', pad=20)
-        plt.xlabel('Rating Sequence')
-        plt.ylabel('Average Rating')
-        plt.legend(title='Scale Factor', bbox_to_anchor=(1.05, 1), loc='upper left')
-        plt.grid(True, alpha=0.3)
-        plt.tight_layout()
-        plt.savefig(os.path.join(output_dir, 'rating_trends.png'), dpi=300, bbox_inches='tight')
+            plt.plot(data.index, ratings,
+                     label=scale_label,
+                     color=color,
+                     alpha=0.9,
+                     linewidth=3)
+
+        plt.title('Image Quality Rating Trends', pad=20, fontweight='bold')
+        plt.xlabel('Rating Sequence', labelpad=15)
+        plt.ylabel('Average Rating', labelpad=15)
+
+        plt.legend(title='Scale Factor',
+                   title_fontsize=14,
+                   bbox_to_anchor=(1.05, 1),
+                   loc='upper left',
+                   frameon=True,
+                   edgecolor='black',
+                   fancybox=False,
+                   shadow=True)
+
+        plt.grid(True, linestyle='--', alpha=0.4)
+        plt.tight_layout(rect=[0, 0, 0.85, 1])
+        plt.savefig(os.path.join(output_dir, 'rating_trends.png'), bbox_inches='tight')
         plt.close()
 
         # 2. Enhanced Method Comparison
         plt.figure(figsize=(12, 8))
         plot_df_method = plot_df.copy()
-        plot_df_method['method_scale'] = plot_df_method.apply(
-            lambda x: f"{x['method']} ({x['scale']:.2f})" if not x['is_original']
-            else 'Original', axis=1)
+        plot_df_method = plot_df_method[plot_df_method['method'].notna()]
 
-        # Bar plot with error bars and individual points
-        sns.barplot(data=plot_df_method,
-                    x='scale', y='rating',
-                    hue='method',
-                    palette=[self.colors['method1'], self.colors['method2']],
-                    ci=95,
-                    capsize=0.1,
-                    alpha=0.8)
+        ax = sns.barplot(data=plot_df_method,
+                         x='scale',
+                         y='rating',
+                         hue='method',
+                         palette=[self.colors['method1'], self.colors['method2']],
+                         ci=95,
+                         capsize=0.1,
+                         errwidth=2,
+                         alpha=0.8)
 
-        sns.stripplot(data=plot_df_method,
-                      x='scale', y='rating',
-                      hue='method',
-                      dodge=True,
-                      alpha=0.2,
-                      size=4)
+        plt.ylim(0, 5)
 
-        plt.title('Average Quality Rating by Scale and Method', pad=20)
-        plt.xlabel('Scale Factor')
-        plt.ylabel('Quality Rating')
-        plt.legend(title='Method')
-        plt.tight_layout()
-        plt.savefig(os.path.join(output_dir, 'method_comparison.png'), dpi=300)
+        for container in ax.containers:
+            ax.bar_label(container, fmt='%.2f', padding=3, fontsize=12, fontweight='bold')
+
+        plt.title('Quality Ratings by Scale and Method', pad=20, fontweight='bold')
+        plt.xlabel('Scale Factor', labelpad=15)
+        plt.ylabel('Quality Rating', labelpad=15)
+
+        plt.legend(title='Method',
+                   title_fontsize=14,
+                   frameon=True,
+                   edgecolor='black',
+                   fancybox=False,
+                   shadow=True,
+                   bbox_to_anchor=(1.05, 1),
+                   loc='upper left')
+
+        plt.grid(True, linestyle='--', alpha=0.4)
+        plt.tight_layout(rect=[0, 0, 0.9, 1])
+        plt.savefig(os.path.join(output_dir, 'method_comparison.png'), bbox_inches='tight')
         plt.close()
 
-        # 3. Simplified Distribution Plot
-        plt.figure(figsize=(14, 8))
+        # 3. Enhanced Distribution Plot
+        plt.figure(figsize=(16, 10))
         sns.violinplot(data=self.rating_df,
-                       x='image', y='rating',
+                       x='image',
+                       y='rating',
                        hue='is_original',
                        split=True,
                        inner=None,
-                       palette=[self.colors['method1'], self.colors['original']])
+                       palette=['#ea4335', '#34a853'])  # Red for processed, green for original
 
-        plt.title('Rating Distribution by Image Type', pad=20)
-        plt.xlabel('Image Type')
-        plt.ylabel('Quality Rating')
-        plt.xticks(rotation=45)
-        plt.legend(title='Original Image')
+        plt.title('Rating Distribution by Image Type', pad=20, fontweight='bold')
+        plt.xlabel('Image Type', labelpad=15)
+        plt.ylabel('Quality Rating', labelpad=15)
+        plt.xticks(rotation=45, ha='right')
+
+        plt.legend(title='Original Image',
+                   title_fontsize=14,
+                   frameon=True,
+                   edgecolor='black',
+                   fancybox=False,
+                   shadow=True)
+
+        plt.grid(True, linestyle='--', alpha=0.4)
         plt.tight_layout()
-        plt.savefig(os.path.join(output_dir, 'rating_distribution.png'), dpi=300)
+        plt.savefig(os.path.join(output_dir, 'rating_distribution.png'), bbox_inches='tight')
         plt.close()
 
-        # 4. Enhanced Quality Preservation Trend
-        plt.figure(figsize=(12, 8))
+        # 4. Mean Quality Ratings Trend
+        plt.figure(figsize=(14, 10))
         trend_df = plot_df.groupby('scale').agg({
             'rating': ['mean', 'std', 'count']
         }).reset_index()
         trend_df.columns = ['scale', 'mean_rating', 'std_rating', 'count']
-
-        orig_mean = trend_df[trend_df['scale'] == 1.0]['mean_rating'].values[0]
-        trend_df['quality_preserved'] = (trend_df['mean_rating'] / orig_mean) * 100
         trend_df = trend_df.sort_values('scale')
 
         plt.fill_between(trend_df['scale'],
-                         trend_df['quality_preserved'] - trend_df['std_rating'],
-                         trend_df['quality_preserved'] + trend_df['std_rating'],
-                         alpha=0.2, color=self.colors['method1'])
+                         trend_df['mean_rating'] - trend_df['std_rating'],
+                         trend_df['mean_rating'] + trend_df['std_rating'],
+                         alpha=0.2,
+                         color=self.colors['method1'],
+                         label='Standard Deviation')
 
         plt.plot(trend_df['scale'],
-                 trend_df['quality_preserved'],
+                 trend_df['mean_rating'],
                  color=self.colors['method1'],
-                 linewidth=2.5,
+                 linewidth=3,
                  marker='o',
-                 markersize=8)
+                 markersize=10,
+                 label='Mean Quality Rating')
 
-        plt.title('Perceived Quality Preservation by Scale Factor', pad=20)
-        plt.xlabel('Scale Factor')
-        plt.ylabel('Quality Preserved (%)')
-        plt.grid(True, alpha=0.3)
+        for x, y in zip(trend_df['scale'], trend_df['mean_rating']):
+            plt.annotate(f'{y:.2f}',
+                         (x, y),
+                         textcoords="offset points",
+                         xytext=(0, 10),
+                         ha='center',
+                         fontsize=12,
+                         fontweight='bold')
+
+        plt.title('Mean Quality Rating by Scale Factor',
+                  pad=20,
+                  fontweight='bold')
+        plt.xlabel('Scale Factor', labelpad=15)
+        plt.ylabel('Mean Quality Rating', labelpad=15)
+
+        plt.grid(True, linestyle='--', alpha=0.4)
+        plt.legend(frameon=True,
+                   edgecolor='black',
+                   fancybox=False,
+                   shadow=True,
+                   loc='best')
+
+        plt.ylim(0, 5)  # Set y-axis to match rating scale
+
         x_ticks = trend_df['scale'].values
         x_labels = ['Original' if x == 1.0 else f'{x:.2f}' for x in x_ticks]
         plt.xticks(x_ticks, x_labels)
-        plt.tight_layout()
-        plt.savefig(os.path.join(output_dir, 'quality_preservation.png'), dpi=300)
-        plt.close()
 
+        plt.grid(True, linestyle='--', alpha=0.4)
+        plt.legend(frameon=True,
+                   edgecolor='black',
+                   fancybox=False,
+                   shadow=True,
+                   loc='best')
+
+        x_ticks = trend_df['scale'].values
+        x_labels = ['Original' if x == 1.0 else f'{x:.2f}' for x in x_ticks]
+        plt.xticks(x_ticks, x_labels)
+
+        plt.tight_layout()
+        plt.savefig(os.path.join(output_dir, 'quality_preservation.png'), bbox_inches='tight')
+        plt.close()
     def perform_statistical_analysis(self):
         """Enhanced statistical analysis with additional metrics"""
         if not hasattr(self, 'rating_df') or self.rating_df.empty:
@@ -429,11 +505,59 @@ class ImageQualityAnalyzer:
             'p_value': p_val
         }
 
+    def _analyze_image_characteristics(self):
+        """Analyzes specific characteristics for each image type"""
+        if not hasattr(self, 'rating_df') or self.rating_df.empty:
+            return None
+
+        image_characteristics = {}
+
+        # Analyze each image type separately
+        for image in self.rating_df['image'].unique():
+            image_data = self.rating_df[self.rating_df['image'] == image]
+
+            # Calculate basic statistics
+            overall_stats = {
+                'mean': image_data['rating'].mean(),
+                'std': image_data['rating'].std(),
+                'n': len(image_data)
+            }
+
+            # Calculate method sensitivity
+            method_groups = [group['rating'].values for name, group
+                             in image_data[~image_data['is_original']].groupby('method')]
+            if len(method_groups) >= 2:
+                f_stat, p_val = f_oneway(*method_groups)
+                method_sensitivity = {
+                    'f_stat': f_stat,
+                    'p_value': p_val
+                }
+            else:
+                method_sensitivity = None
+
+            # Calculate scale degradation
+            scale_means = image_data[~image_data['is_original']].groupby('scale')['rating'].mean()
+            scale_degradation = (scale_means.max() - scale_means.min()) / scale_means.max()
+
+            # Calculate scale consistency
+            scale_stds = image_data[~image_data['is_original']].groupby('scale')['rating'].std()
+            scale_consistency = scale_stds.mean()
+
+            image_characteristics[image] = {
+                'stats': overall_stats,
+                'method_sensitivity': method_sensitivity,
+                'scale_degradation': scale_degradation,
+                'scale_consistency': scale_consistency
+            }
+
+        return image_characteristics
+
     def _analyze_image_type_effects(self):
-        """Analyze effects across different image types."""
+        """Enhanced analysis of effects across different image types."""
         image_data = self.rating_df[~self.rating_df['is_original']]
         image_stats = {}
 
+        # Basic statistics per image
         for image in image_data['image'].unique():
             image_ratings = image_data[image_data['image'] == image]['rating']
             image_stats[image] = {
@@ -442,13 +566,29 @@ class ImageQualityAnalyzer:
                 'n': len(image_ratings)
             }
 
+        # Get detailed characteristics
+        characteristics = self._analyze_image_characteristics()
+
+        # Categorize images based on characteristics
+        categorized_results = {
+            'high_detail_images': {},  # baboon, etc.
+            'structural_images': {},  # bridge, etc.
+            'smooth_images': {},  # pepper, etc.
+            'pattern_images': {}  # zebra, etc.
+        }
+
+        for image, data in characteristics.items():
+            # High detail category (like baboon)
+            if data['stats']['std'] > 0.7 and data['scale_degradation'] > 0.5:
+                categorized_results['high_detail_images'][image] = data
+            # Structural category (like bridge)
+            elif data['scale_consistency'] < 0.5 and data['stats']['std'] < 0.5:
+                categorized_results['structural_images'][image] = data
+            # Add other categorizations as needed
+
         # Perform ANOVA
         image_groups = [group['rating'].values for name, group
                         in image_data.groupby('image')]
-
-        if len(image_groups) < 2:
-            return None
-
         f_stat, p_val = f_oneway(*image_groups)
 
         # Add post-hoc analysis
@@ -458,8 +598,299 @@ class ImageQualityAnalyzer:
             'image_stats': image_stats,
             'f_stat': f_stat,
             'p_value': p_val,
-            'tukey_results': tukey
+            'tukey_results': tukey,
+            'detailed_characteristics': characteristics,
+            'categorized_results': categorized_results
         }
+
+    def print_image_analysis_summary(self):
+        """Print detailed summary of image-specific analysis"""
+        if not hasattr(self, 'analysis_results'):
+            print("No analysis results available.")
+            return
+
+        image_effects = self.analysis_results.get('image_type_effects')
+        if not image_effects:
+            return
+
+        print("\nIMAGE-SPECIFIC ANALYSIS:")
+
+        categories = image_effects['categorized_results']
+
+        # Print high detail images (like baboon)
+        if categories['high_detail_images']:
+            print("\nComplex Texture Patterns:")
+            for image, data in categories['high_detail_images'].items():
+                print(f"\n{image.capitalize()}:")
+                print(f"  Rating variance: σ = {data['stats']['std']:.2f}")
+                print(f"  Scale degradation: {data['scale_degradation'] * 100:.1f}%")
+                if data['method_sensitivity']:
+                    print(f"  Method sensitivity: p = {data['method_sensitivity']['p_value']:.3f}")
+
+        # Print structural images (like bridge)
+        if categories['structural_images']:
+            print("\nStructural Content:")
+            for image, data in categories['structural_images'].items():
+                print(f"\n{image.capitalize()}:")
+                print(f"  Rating consistency: σ = {data['stats']['std']:.2f}")
+                print(f"  Scale consistency: {data['scale_consistency']:.3f}")
+                if data['method_sensitivity']:
+                    print(f"  Method independence: p = {data['method_sensitivity']['p_value']:.3f}")
+    def analyze_group_differences(self):
+        """Analyze differences and correlations between participant groups"""
+        if not hasattr(self, 'rating_df') or self.rating_df.empty:
+            return None
+
+        results = {
+            'correlations': {},
+            'group_comparisons': {},
+            'rating_patterns': {},
+            'consistency': {}
+        }
+
+        # 1. Within-group rating correlations
+        group_correlations = {}
+        for group in self.rating_df['group'].unique():
+            group_data = self.rating_df[self.rating_df['group'] == group].pivot_table(
+                index=['image', 'scale', 'method'],
+                columns='participant_id',
+                values='rating'
+            )
+            # Calculate correlation matrix and average correlation
+            corr_matrix = group_data.corr()
+            # Get upper triangle values excluding diagonal
+            upper_triangle = np.triu(corr_matrix, k=1)
+            avg_corr = np.nanmean(upper_triangle)
+            group_correlations[group] = {
+                'avg_correlation': avg_corr,
+                'correlation_matrix': corr_matrix,
+                'std_correlation': np.nanstd(upper_triangle)
+            }
+        results['correlations']['within_group'] = group_correlations
+
+        # 2. Between-group comparisons
+        # ANOVA between groups
+        group_ratings = [group_data['rating'].values for name, group_data
+                         in self.rating_df.groupby('group')]
+        f_stat, p_val = f_oneway(*group_ratings)
+        results['group_comparisons']['anova'] = {
+            'f_statistic': f_stat,
+            'p_value': p_val
+        }
+
+        # Pairwise t-tests between groups
+        groups = sorted(self.rating_df['group'].unique())
+        t_test_results = {}
+        for i in range(len(groups)):
+            for j in range(i + 1, len(groups)):
+                group1, group2 = groups[i], groups[j]
+                ratings1 = self.rating_df[self.rating_df['group'] == group1]['rating']
+                ratings2 = self.rating_df[self.rating_df['group'] == group2]['rating']
+
+                t_stat, p_val = stats.ttest_ind(ratings1, ratings2)
+                # Calculate Cohen's d effect size
+                effect_size = (np.mean(ratings1) - np.mean(ratings2)) / np.sqrt(
+                    ((len(ratings1) - 1) * np.var(ratings1) +
+                     (len(ratings2) - 1) * np.var(ratings2)) /
+                    (len(ratings1) + len(ratings2) - 2)
+                )
+
+                t_test_results[f'{group1}_vs_{group2}'] = {
+                    't_statistic': t_stat,
+                    'p_value': p_val,
+                    'effect_size': effect_size
+                }
+        results['group_comparisons']['t_tests'] = t_test_results
+
+        # 3. Tukey's HSD test
+        tukey = pairwise_tukeyhsd(self.rating_df['rating'], self.rating_df['group'])
+        results['group_comparisons']['tukey_hsd'] = tukey
+
+        # 4. Rating patterns analysis
+        for group in self.rating_df['group'].unique():
+            group_data = self.rating_df[self.rating_df['group'] == group]
+
+            # Calculate basic statistics
+            stats_summary = {
+                'mean_rating': group_data['rating'].mean(),
+                'std_rating': group_data['rating'].std(),
+                'median_rating': group_data['rating'].median(),
+                'rating_range': group_data['rating'].max() - group_data['rating'].min(),
+                'n_ratings': len(group_data)
+            }
+
+            # Scale-specific statistics
+            scale_stats = {}
+            for scale in sorted(group_data['scale'].unique()):
+                if pd.isna(scale):
+                    continue
+                scale_data = group_data[group_data['scale'] == scale]
+                scale_stats[str(scale)] = {
+                    'mean': scale_data['rating'].mean(),
+                    'std': scale_data['rating'].std(),
+                    'n': len(scale_data)
+                }
+
+            results['rating_patterns'][group] = {
+                'summary': stats_summary,
+                'scale_statistics': scale_stats
+            }
+
+        # 5. Consistency analysis
+        for group in self.rating_df['group'].unique():
+            group_data = self.rating_df[self.rating_df['group'] == group]
+
+            # Calculate ICC
+            group_wide = group_data.pivot_table(
+                index=['image', 'scale', 'method'],
+                columns='participant_id',
+                values='rating'
+            )
+            icc = self._calculate_icc(group_wide)
+
+            # Calculate coefficient of variation for ratings
+            cv = group_data.groupby('participant_id')['rating'].std() / \
+                 group_data.groupby('participant_id')['rating'].mean()
+
+            # Calculate agreement on original images
+            orig_data = group_data[group_data['is_original']].pivot_table(
+                index='image',
+                columns='participant_id',
+                values='rating'
+            )
+            orig_agreement = np.mean([
+                len(row[abs(row - row.mean()) <= 1]) / len(row)
+                for _, row in orig_data.iterrows()
+            ])
+
+            results['consistency'][group] = {
+                'icc': icc,
+                'cv_mean': cv.mean(),
+                'cv_std': cv.std(),
+                'original_agreement': orig_agreement
+            }
+
+        self._create_group_comparison_visualizations()
+        return results
+
+    def _create_group_comparison_visualizations(self, output_dir='analysis_output'):
+        """Create comprehensive visualizations for group comparisons"""
+        os.makedirs(output_dir, exist_ok=True)
+
+        # 1. Rating distributions by group
+        plt.figure(figsize=(12, 8))
+        sns.violinplot(data=self.rating_df, x='group', y='rating')
+        plt.title('Rating Distributions by Group')
+        plt.xlabel('Group')
+        plt.ylabel('Rating')
+        plt.tight_layout()
+        plt.savefig(os.path.join(output_dir, 'group_rating_distributions.png'), dpi=300)
+        plt.close()
+
+        # 2. Scale-specific comparisons
+        plt.figure(figsize=(15, 8))
+        for group in sorted(self.rating_df['group'].unique()):
+            group_data = self.rating_df[self.rating_df['group'] == group].copy()
+            group_data.loc[group_data['is_original'], 'scale'] = 1.0
+            means = group_data.groupby('scale')['rating'].mean()
+            std = group_data.groupby('scale')['rating'].std()
+
+            plt.errorbar(means.index, means.values,
+                         yerr=std.values,
+                         label=group,
+                         marker='o',
+                         capsize=5,
+                         linewidth=2,
+                         markersize=8)
+
+        plt.title('Quality Ratings by Scale and Group')
+        plt.xlabel('Scale Factor')
+        plt.ylabel('Average Rating')
+        plt.legend()
+        plt.grid(True, alpha=0.3)
+        plt.tight_layout()
+        plt.savefig(os.path.join(output_dir, 'group_scale_comparison.png'), dpi=300)
+        plt.close()
+
+        # 3. Correlation heatmaps
+        for group in sorted(self.rating_df['group'].unique()):
+            group_data = self.rating_df[self.rating_df['group'] == group].pivot_table(
+                index=['image', 'scale', 'method'],
+                columns='participant_id',
+                values='rating'
+            )
+
+            plt.figure(figsize=(10, 8))
+            sns.heatmap(group_data.corr(),
+                        annot=True,
+                        cmap='RdYlBu_r',
+                        center=0,
+                        vmin=-1,
+                        vmax=1)
+            plt.title(f'Rating Correlations - {group}')
+            plt.tight_layout()
+            plt.savefig(os.path.join(output_dir, f'correlation_heatmap_{group}.png'), dpi=300)
+            plt.close()
+
+        # 4. Method comparison across groups
+        plt.figure(figsize=(12, 8))
+        method_data = self.rating_df[~self.rating_df['is_original']]
+        sns.boxplot(data=method_data, x='group', y='rating', hue='method')
+        plt.title('Rating Distribution by Group and Method')
+        plt.xlabel('Group')
+        plt.ylabel('Rating')
+        plt.legend(title='Method')
+        plt.tight_layout()
+        plt.savefig(os.path.join(output_dir, 'group_method_comparison.png'), dpi=300)
+        plt.close()
+
+    def print_group_analysis_summary(self):
+        """Print comprehensive summary of group analysis results"""
+        results = self.analyze_group_differences()
+        if not results:
+            print("No analysis results available.")
+            return
+
+        print("\n=== Group Analysis Summary ===\n")
+
+        # 1. Group Correlations
+        print("WITHIN-GROUP CORRELATIONS:")
+        for group, corr_data in results['correlations']['within_group'].items():
+            print(f"\n{group}:")
+            print(f"  Average correlation: {corr_data['avg_correlation']:.3f}")
+            print(f"  Correlation std dev: {corr_data['std_correlation']:.3f}")
+
+        # 2. Group Comparisons
+        print("\nGROUP COMPARISONS:")
+        print("\nANOVA Results:")
+        anova = results['group_comparisons']['anova']
+        print(f"  F-statistic: {anova['f_statistic']:.3f}")
+        print(f"  p-value: {anova['p_value']:.3f}")
+
+        print("\nPairwise T-tests:")
+        for comparison, stats in results['group_comparisons']['t_tests'].items():
+            print(f"\n{comparison}:")
+            print(f"  t-statistic: {stats['t_statistic']:.3f}")
+            print(f"  p-value: {stats['p_value']:.3f}")
+            print(f"  Effect size (Cohen's d): {stats['effect_size']:.3f}")
+
+        # 3. Consistency Metrics
+        print("\nGROUP CONSISTENCY METRICS:")
+        for group, metrics in results['consistency'].items():
+            print(f"\n{group}:")
+            print(f"  ICC: {metrics['icc']:.3f}")
+            print(f"  Coefficient of Variation: {metrics['cv_mean']:.3f} ± {metrics['cv_std']:.3f}")
+            print(f"  Original Image Agreement: {metrics['original_agreement']:.3f}")
+
+        # 4. Rating Patterns
+        print("\nRATING PATTERNS BY GROUP:")
+        for group, patterns in results['rating_patterns'].items():
+            print(f"\n{group}:")
+            summary = patterns['summary']
+            print(f"  Mean Rating: {summary['mean_rating']:.2f} ± {summary['std_rating']:.2f}")
+            print(f"  Median Rating: {summary['median_rating']:.2f}")
+            print(f"  Rating Range: {summary['rating_range']:.2f}")
+            print(f"  Number of Ratings: {summary['n_ratings']}")
 
 
 def main():
@@ -468,6 +899,8 @@ def main():
         analyzer.perform_statistical_analysis()
         analyzer.create_visualizations()
         analyzer.print_analysis_summary()
+        analyzer.analyze_group_differences()
+        analyzer.print_group_analysis_summary()
 
 
 if __name__ == "__main__":
